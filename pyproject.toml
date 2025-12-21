@@ -3,25 +3,25 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cubic-solar-calendar"
-version = "0.2.0"
-description = "Dave's Cubic Solar Calendar"
+name = "solcadre"
+version = "0.1.0"
+description = "Solcadre System"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "David Coates" }]
-keywords = ["calendar", "astronomy", "solstice", "equinox", "seasons"]
+keywords = ["calendar", "astronomy", "solstice", "equinox", "seasons", "week", "time", "cycle"]
 
 dependencies = [
   "astral>=3.2",
 ]
 
 [project.urls]
-Homepage = "https://github.com/davidcoates/calendar"
-Issues = "https://github.com/davidcoates/calendar/issues"
+Homepage = "https://github.com/davidcoates/solcadre"
+Issues = "https://github.com/davidcoates/solcadre/issues"
 
 [project.scripts]
-cubic-calendar = "cubic_calendar.cli:main"
+solcadre = "solcadre.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cubic_calendar"]
+packages = ["src/solcadre"]

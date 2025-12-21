@@ -51,7 +51,7 @@ def print_calendar(calendar: Calendar, year: int, block: Block, blocks: int, hig
 
 def main():
 
-    parser = argparse.ArgumentParser(description="Dave's Cubic Solar Calendar")
+    parser = argparse.ArgumentParser(description="Solcadre System")
 
     local_timezone = datetime.now(timezone.utc).astimezone().tzinfo
     parser.add_argument("--latitude", type=float, default=CANONICAL_LATITUDE, help="used to derive sunrise/sunset times (default is that of Sydney, Australia)")
@@ -76,22 +76,22 @@ def main():
     if gregorian_date.tzinfo is None:
         gregorian_date = gregorian_date.astimezone(args.timezone)
 
-    cubic_date = calendar.find_day(gregorian_date)
-    if cubic_date is None:
+    solcadre_date = calendar.find_day(gregorian_date)
+    if solcadre_date is None:
         print(f"failed to convert time({args.time}) to date", file=sys.stderr)
         return
 
     if args.time is None:
-        print(f"It is now {cubic_date}.")
+        print(f"It is now {solcadre_date}.")
     else:
-        print(f"{gregorian_date} is {cubic_date}.")
+        print(f"{gregorian_date} is {solcadre_date}.")
 
     print("")
-    print(f"The day begins at {cubic_date.start} and ends at {cubic_date.end}.")
+    print(f"The day begins at {solcadre_date.start} and ends at {solcadre_date.end}.")
 
     if args.command == "calendar":
         print("")
-        print_calendar(calendar, cubic_date.year, cubic_date.block, args.blocks, highlight=cubic_date)
+        print_calendar(calendar, solcadre_date.year, solcadre_date.block, args.blocks, highlight=solcadre_date)
 
 
 if __name__ == "__main__":
