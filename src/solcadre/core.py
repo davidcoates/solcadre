@@ -103,6 +103,13 @@ class Day:
     day_of_block: int
     days_since_epoch: int
 
+    def __post_init__(self):
+        assert self.sunrise.date() == self.sunset.date()
+
+    @property
+    def date(self) -> date:
+        return self.sunrise.date()
+
     @property
     def start(self) -> datetime:
         return self.sunrise
@@ -183,7 +190,7 @@ class Calendar:
                 assert False
         gregorian_date = CANONICAL_EPOCH + timedelta(days=gregorian_offset)
         assert Weekday.from_datetime(self._sunrise_of_day(gregorian_date)) == Weekday.SUNDAY
-        assert Weekday.from_datetime(CANONICAL_DAYS[offset].sunrise) == Weekday.SUNDAY
+        assert Weekday.from_datetime(CANONICAL_DAYS[offset].start) == Weekday.SUNDAY
         assert offset >= 0
         year = -1
         for i, canonical_day in enumerate(CANONICAL_DAYS[offset:]):
