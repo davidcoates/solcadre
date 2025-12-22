@@ -1,15 +1,10 @@
-__all__ = ["Hemisphere", "SolarEventType", "SolarEvent", "SOLAR_EVENTS"]
+__all__ = ["SolarEventType", "SolarEvent", "SOLAR_EVENTS"]
 
 from dataclasses import dataclass
 from datetime import date, datetime, timezone, timedelta
 from enum import Enum, auto
 
 from .format import format_time
-
-
-class Hemisphere(Enum):
-    NORTHERN = auto()
-    SOUTHERN = auto()
 
 
 class SolarEventType(Enum):

@@ -1,5 +1,4 @@
 __all__ = [
-    "Hemisphere",
     "SolarEventType",
     "SolarEvent",
     "Season",
@@ -7,6 +6,7 @@ __all__ = [
     "Block",
     "Weekday",
     "Day",
+    "Hemisphere",
     "Calendar",
     "InvalidLatitude"
 ]

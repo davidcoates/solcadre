@@ -9,6 +9,7 @@ __all__ = [
     "Block",
     "Weekday",
     "Day",
+    "Hemisphere",
     "Calendar"
 ]
 
@@ -141,6 +142,11 @@ class Day:
 
     def __str__(self):
         return self.human_string()
+
+
+class Hemisphere(Enum):
+    NORTHERN = auto()
+    SOUTHERN = auto()
 
 
 @dataclass
