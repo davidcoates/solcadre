@@ -2,7 +2,6 @@ __all__ = [
     "Hemisphere",
     "SolarEventType",
     "SolarEvent",
-    "SOLAR_EVENTS",
     "Season",
     "Holiday",
     "Block",

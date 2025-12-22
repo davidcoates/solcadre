@@ -8,11 +8,6 @@ from .solar_events import SOLAR_EVENTS
 
 
 def print_block(calendar: Calendar, year: int, block: Block, highlight : Day | None = None):
-    def is_solar_event_on_day(day):
-        for solar_event in SOLAR_EVENTS:
-            if day.start <= solar_event.time < day.end:
-                return True
-        return False
     WIDTH = 43
     if block == Season.GREENTIDE:
         print("")
@@ -30,7 +25,7 @@ def print_block(calendar: Calendar, year: int, block: Block, highlight : Day | N
         for _ in range(7):
             if day == highlight:
                 day_str = "TODAY"
-            elif is_solar_event_on_day(day):
+            elif day.solar_event is not None:
                 day_str = "SOLAR"
             else:
                 day_str = "     "

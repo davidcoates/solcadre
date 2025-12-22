@@ -102,6 +102,7 @@ class Day:
     block: Block
     day_of_block: int
     days_since_epoch: int
+    solar_event: SolarEvent | None
 
     def __post_init__(self):
         assert self.sunrise.date() == self.sunset.date()
@@ -173,8 +174,6 @@ class Calendar:
             raise InvalidLatitude(self.latitude, f"no sunset on date({date})")
 
     def _calc_localized_days(self):
-        if self.latitude == CANONICAL_LATITUDE and self.longitude == CANONICAL_LONGITUDE and self.timezone == CANONICAL_TIMEZONE:
-            return CANONICAL_DAYS
         days = []
         offset = 0
         if self.hemisphere == Hemisphere.NORTHERN:
@@ -193,6 +192,7 @@ class Calendar:
         assert Weekday.from_datetime(CANONICAL_DAYS[offset].start) == Weekday.SUNDAY
         assert offset >= 0
         year = -1
+        next_solar_event_index = 0
         for i, canonical_day in enumerate(CANONICAL_DAYS[offset:]):
             block = canonical_day.block
             day_of_block = canonical_day.day_of_block
@@ -200,14 +200,22 @@ class Calendar:
                 block = block.flip()
             if block == Season.GREENTIDE and day_of_block == 0:
                 year += 1
+            sunrise = self._sunrise_of_day(gregorian_date)
+            next_sunrise = self._sunrise_of_day(gregorian_date + timedelta(days=1))
+            while next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < sunrise:
+                next_solar_event_index += 1
+            solar_event = None
+            if next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < next_sunrise:
+                solar_event = SOLAR_EVENTS[next_solar_event_index]
             day = Day(
-                sunrise = self._sunrise_of_day(gregorian_date),
-                sunset = self._sunset_of_day(gregorian_date),
-                next_sunrise = self._sunrise_of_day(gregorian_date + timedelta(days=1)),
-                year = year,
-                block = block,
-                day_of_block = day_of_block,
-                days_since_epoch = i
+                sunrise=sunrise,
+                sunset=self._sunset_of_day(gregorian_date),
+                next_sunrise=next_sunrise,
+                year=year,
+                block=block,
+                day_of_block=day_of_block,
+                days_since_epoch=i,
+                solar_event=solar_event
             )
             days.append(day)
             gregorian_date = gregorian_date + timedelta(days=1)
@@ -230,7 +238,8 @@ def _calc_canonical_days() -> Iterable[Day]:
         year=0,
         block=Season.GREENTIDE,
         day_of_block=0,
-        days_since_epoch=0
+        days_since_epoch=0,
+        solar_event=None
     )
     yield day
     while True:
@@ -269,6 +278,7 @@ def _calc_canonical_days() -> Iterable[Day]:
             block=block,
             day_of_block=day_of_block,
             days_since_epoch=day.days_since_epoch + 1,
+            solar_event=None
         )
         yield day
 
