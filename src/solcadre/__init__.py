@@ -8,10 +8,10 @@ __all__ = [
     "Block",
     "Weekday",
     "Day",
-    "Calendar"
+    "Calendar",
+    "InvalidLatitude"
 ]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .core import *
 from .solar_events import *
-

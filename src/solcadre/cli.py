@@ -16,7 +16,7 @@ def print_block(calendar: Calendar, year: int, block: Block, highlight : Day | N
     WIDTH = 43
     if block == Season.GREENTIDE:
         print("")
-        print(f"* Year {year} *".center(WIDTH))
+        print(f"* Year {year + 1} *".center(WIDTH))
         print("")
     day = next(day for day in calendar.days if day.year == year and day.block == block)
     assert day.day_of_block == 0
