@@ -8,6 +8,7 @@ from .format import format_time
 
 
 class SolarEventType(Enum):
+    """Enumeration of the four solar event types (solstices and equinoxes)."""
     DECEMBER_SOLSTICE = auto()
     MARCH_EQUINOX = auto()
     JUNE_SOLSTICE = auto()
@@ -19,6 +20,12 @@ class SolarEventType(Enum):
 
 @dataclass
 class SolarEvent:
+    """Represents a single solar event (a solstice or an equinox).
+
+    Attributes:
+        type: The type of solar event.
+        time: The datetime of the solar event.
+    """
     type: SolarEventType
     time: datetime
 
