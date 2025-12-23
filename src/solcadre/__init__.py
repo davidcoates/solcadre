@@ -16,7 +16,7 @@ __all__ = [
     "InvalidLatitude",
     "Calendar"
 ]
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
 from .types import *
 from .calendar import *
