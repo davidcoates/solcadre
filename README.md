@@ -10,7 +10,6 @@ Human routines, work, and social life are overwhelmingly structured around the *
 The year is divided into **four fixed 12-week seasons**, with **explicit transition weeks** between seasons.
 
 **See it in action:** https://solcadre.net
-**Documentation:** https://solcadre.readthedocs.io
 
 ---
 
