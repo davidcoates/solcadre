@@ -176,17 +176,31 @@ class Day:
         sunset: The datetime of sunset for this day.
         next_sunrise: The datetime of sunrise for the next day.
         solar_event: Optional SolarEvent that occurs on this day, if any.
-        days_since_epoch: The number of days since the epoch, which serves as an identifier of the date.
+        index: Day.Index locating this day within the calendar.
     """
     sunrise: datetime
     sunset: datetime
     next_sunrise: datetime
     solar_event: SolarEvent | None
-    days_since_epoch: int
-    _day_index: int
-    _week_index: int
-    _block_index: int
-    _year_index: int
+
+    @dataclass(frozen=True)
+    class Index:
+        """Indices locating this day within the Solcadre calendar.
+
+        Attributes:
+            year_of_calendar: Zero-based year index since the epoch.
+            block_of_year: Zero-based block index within the year.
+            week_of_block: Zero-based week index within the block.
+            day_of_week: Zero-based weekday index (0 = Sunday).
+            day_of_calendar: Zero-based day index since the epoch.
+        """
+        year_of_calendar: int
+        block_of_year: int
+        week_of_block: int
+        day_of_week: int
+        day_of_calendar: int
+
+    index: Index
 
     def __post_init__(self):
         assert self.sunrise.date() == self.sunset.date()
@@ -225,7 +239,7 @@ class Day:
         Returns:
             Weekday: The weekday enum value.
         """
-        return Weekday(self._day_index % 7)
+        return Weekday(self.index.day_of_week)
 
     @property
     def week_number(self) -> int:
@@ -234,7 +248,7 @@ class Day:
         Returns:
             int: The week number within the current block.
         """
-        return self._week_index + 1
+        return self.index.week_of_block + 1
 
     @property
     def block_type(self) -> BlockType:
@@ -243,7 +257,7 @@ class Day:
         Returns:
             BlockType: The Season or Transition this day is part of.
         """
-        return block_type_from_index(self._block_index)
+        return block_type_from_index(self.index.block_of_year)
 
     @property
     def year_number(self) -> int:
@@ -252,7 +266,11 @@ class Day:
         Returns:
             int: The year number.
         """
-        return self._year_index + 1
+        return self.index.year_of_calendar + 1
+
+    @property
+    def days_since_epoch(self) -> int:
+        return self.index.day_of_calendar
 
     def solar_phase(self, datetime: datetime) -> SolarPhase:
         assert self.start <= datetime < self.end
@@ -271,10 +289,10 @@ class Day:
         return f"{self.year_number}/{self.block_type.number}/{self.week_number}/{self.weekday.number}"
 
     def __eq__(self, other):
-        return self.days_since_epoch == other.days_since_epoch
+        return self.index.day_of_calendar == other.index.day_of_calendar
 
     def __hash__(self):
-        return self.days_since_epoch
+        return hash(self.index.day_of_calendar)
 
 
 @dataclass(frozen=True)
@@ -285,10 +303,26 @@ class Week:
 
     Attributes:
         days: List of seven Day objects that make up this week.
-        weeks_since_epoch: The number of weeks since the calendar epoch.
+        index: Week.Index locating this week within the calendar.
     """
     days: list[Day]
-    weeks_since_epoch: int
+
+    @dataclass(frozen=True)
+    class Index:
+        """Indices locating this week within the Solcadre calendar.
+
+        Attributes:
+            year_of_calendar: Zero-based year index since the epoch.
+            block_of_year: Zero-based block index within the year.
+            week_of_block: Zero-based week index within the block.
+            week_of_calendar: Zero-based week index since the epoch.
+        """
+        year_of_calendar: int
+        block_of_year: int
+        week_of_block: int
+        week_of_calendar: int
+
+    index: Index
 
     @property
     def number(self) -> int:
@@ -335,18 +369,6 @@ class Week:
         """
         return self.days[-1].next_sunrise
 
-    @property
-    def _week_index(self) -> int:
-        return self.days[0]._week_index
-
-    @property
-    def _block_index(self) -> int:
-        return self.days[0]._block_index
-
-    @property
-    def _year_index(self) -> int:
-        return self.days[0]._year_index
-
     def __str__(self):
         """Return a string representation of this week.
 
@@ -356,10 +378,10 @@ class Week:
         return f"{self.year_number}/{self.block_type.number}/{self.number}"
 
     def __eq__(self, other):
-        return self._year_index == other._year_index and self._block_index == other._block_index and self._week_index == other._week_index
+        return self.index.week_of_calendar == other.index.week_of_calendar
 
     def __hash__(self):
-        return hash((self._year_index, self._block_index, self._week_index))
+        return hash(self.index.week_of_calendar)
 
 
 @dataclass(frozen=True)
@@ -370,10 +392,24 @@ class Block:
 
     Attributes:
         weeks: List of Week objects that make up this block.
-        blocks_since_epoch: The number of blocks since the calendar epoch.
+        index: Block.Index locating this block within the calendar.
     """
     weeks: list[Week]
-    blocks_since_epoch: int
+
+    @dataclass(frozen=True)
+    class Index:
+        """Indices locating this block within the Solcadre calendar.
+
+        Attributes:
+            year_of_calendar: Zero-based year index since the epoch.
+            block_of_year: Zero-based block index within the year.
+            block_of_calendar: Zero-based block index since the epoch.
+        """
+        year_of_calendar: int
+        block_of_year: int
+        block_of_calendar: int
+
+    index: Index
 
     @property
     def type(self) -> BlockType:
@@ -411,14 +447,6 @@ class Block:
         """
         return self.weeks[-1].end
 
-    @property
-    def _block_index(self) -> int:
-        return self.weeks[0]._block_index
-
-    @property
-    def _year_index(self) -> int:
-        return self.weeks[0]._year_index
-
     def __str__(self):
         """Return a string representation of this block.
 
@@ -428,10 +456,10 @@ class Block:
         return f"{self.year_number}/{self.type.number}"
 
     def __eq__(self, other):
-        return self._year_index == other._year_index and self._block_index == other._block_index
+        return self.index.block_of_calendar == other.index.block_of_calendar
 
     def __hash__(self):
-        return hash((self._year_index, self._block_index))
+        return hash(self.index.block_of_calendar)
 
 
 @dataclass(frozen=True)
@@ -443,10 +471,20 @@ class Year:
 
     Attributes:
         blocks: List of Block objects (seasons and transitions) that make up this year.
-        years_since_epoch: The number of years since the calendar epoch.
+        index: Year.Index locating this year within the calendar.
     """
     blocks: list[Block]
-    years_since_epoch: int
+
+    @dataclass(frozen=True)
+    class Index:
+        """Indices locating this year within the Solcadre calendar.
+
+        Attributes:
+            year_of_calendar: Zero-based year index since the epoch.
+        """
+        year_of_calendar: int
+
+    index: Index
 
     @property
     def number(self) -> int:
@@ -475,10 +513,6 @@ class Year:
         """
         return self.blocks[-1].end
 
-    @property
-    def _year_index(self) -> int:
-        return self.blocks[0]._year_index
-
     def __str__(self):
         """Return a string representation of this year.
 
@@ -488,10 +522,10 @@ class Year:
         return f"{self.number}"
 
     def __eq__(self, other):
-        return self._year_index == other._year_index
+        return self.index.year_of_calendar == other.index.year_of_calendar
 
     def __hash__(self):
-        return hash(self._year_index)
+        return hash(self.index.year_of_calendar)
 
 
 @dataclass(frozen=True)

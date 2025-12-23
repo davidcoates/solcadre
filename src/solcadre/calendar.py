@@ -180,7 +180,7 @@ class Calendar:
                 return year
         return None
 
-    def iter_days(self, start_day = None, end_day = None) -> Iterable[Day]:
+    def iter_days(self, start_day : Day | None = None, end_day : Day | None = None) -> Iterable[Day]:
         """Iterate over days in the calendar.
 
         Args:
@@ -192,11 +192,11 @@ class Calendar:
         Returns:
             Iterable[Day]: An iterator over Day objects in chronological order.
         """
-        start_index = None if start_day is None else start_day.days_since_epoch
-        end_index = None if end_day is None else end_day.days_since_epoch
+        start_index = None if start_day is None else start_day.index.day_of_calendar
+        end_index = None if end_day is None else end_day.index.day_of_calendar
         return self._days.iter_items(start_index, end_index)
 
-    def iter_weeks(self, start_week = None, end_week = None) -> Iterable[Week]:
+    def iter_weeks(self, start_week : Week | None = None, end_week : Week | None = None) -> Iterable[Week]:
         """Iterate over weeks in the calendar.
 
         Args:
@@ -208,11 +208,11 @@ class Calendar:
         Returns:
             Iterable[Week]: An iterator over Week objects in chronological order.
         """
-        start_index = None if start_week is None else start_week.weeks_since_epoch
-        end_index = None if end_week is None else end_week.weeks_since_epoch
+        start_index = None if start_week is None else start_week.index.week_of_calendar
+        end_index = None if end_week is None else end_week.index.week_of_calendar
         return self._weeks.iter_items(start_index, end_index)
 
-    def iter_blocks(self, start_block = None, end_block = None) -> Iterable[Block]:
+    def iter_blocks(self, start_block : Block | None = None, end_block : Block | None = None) -> Iterable[Block]:
         """Iterate over blocks (seasons and transitions) in the calendar.
 
         Args:
@@ -224,11 +224,11 @@ class Calendar:
         Returns:
             Iterable[Block]: An iterator over Block objects in chronological order.
         """
-        start_index = None if start_block is None else start_block.blocks_since_epoch
-        end_index = None if end_block is None else end_block.blocks_since_epoch
+        start_index = None if start_block is None else start_block.index.block_of_calendar
+        end_index = None if end_block is None else end_block.index.block_of_calendar
         return self._blocks.iter_items(start_index, end_index)
 
-    def iter_years(self, start_year = None, end_year = None) -> Iterable[Year]:
+    def iter_years(self, start_year : Year | None = None, end_year : Year | None = None) -> Iterable[Year]:
         """Iterate over years in the calendar.
 
         Args:
@@ -240,8 +240,8 @@ class Calendar:
         Returns:
             Iterable[Year]: An iterator over Year objects in chronological order.
         """
-        start_index = None if start_year is None else start_year.years_since_epoch
-        end_index = None if end_year is None else end_year.years_since_epoch
+        start_index = None if start_year is None else start_year.index.year_of_calendar
+        end_index = None if end_year is None else end_year.index.year_of_calendar
         return self._years.iter_items(start_index, end_index)
 
     def week_of(self, obj: Day) -> Week:
@@ -253,7 +253,7 @@ class Calendar:
         Returns:
             Week: The Week object containing the given day.
         """
-        return self.block_of(obj).weeks[obj._week_index]
+        return self.block_of(obj).weeks[obj.index.week_of_block]
 
     def block_of(self, obj: Day | Week) -> Block:
         """Get the Block object that contains the given day or week.
@@ -264,7 +264,7 @@ class Calendar:
         Returns:
             Block: The Block object (season or transition) containing the given object.
         """
-        return self.year_of(obj).blocks[obj._block_index]
+        return self.year_of(obj).blocks[obj.index.block_of_year]
 
     def year_of(self, obj: Day | Week | Block) -> Year:
         """Get the Year object that contains the given day, week, or block.
@@ -275,7 +275,7 @@ class Calendar:
         Returns:
             Year: The Year object containing the given object.
         """
-        year = self._years[obj._year_index]
+        year = self._years[obj.index.year_of_calendar]
         assert year is not None
         return year
 
@@ -309,16 +309,16 @@ class Calendar:
         gregorian_date = CANONICAL_EPOCH + timedelta(days=gregorian_offset)
         assert Weekday.from_datetime(self._sunrise_of_day(gregorian_date)) == Weekday.SUNDAY
         assert offset >= 0
-        year_index = -1
+        year_of_calendar = -1
         next_solar_event_index = 0
-        for days_since_epoch, canonical_day in enumerate(canonical_days):
-            day_index = canonical_day._day_index
-            week_index = canonical_day._week_index
-            block_index = canonical_day._block_index
+        for day_of_calendar, canonical_day in enumerate(canonical_days):
+            day_of_week = canonical_day.index.day_of_week
+            week_of_block = canonical_day.index.week_of_block
+            block_of_year = canonical_day.index.block_of_year
             if self.hemisphere == Hemisphere.NORTHERN:
-                block_index = block_type_from_index(block_index).flip().value
-            if block_type_from_index(block_index) == Season.GREENTIDE and week_index == 0 and day_index == 0:
-                year_index += 1
+                block_of_year = block_type_from_index(block_of_year).flip().value
+            if block_type_from_index(block_of_year) == Season.GREENTIDE and week_of_block == 0 and day_of_week == 0:
+                year_of_calendar += 1
             sunrise = self._sunrise_of_day(gregorian_date)
             next_sunrise = self._sunrise_of_day(gregorian_date + timedelta(days=1))
             while next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < sunrise:
@@ -331,33 +331,49 @@ class Calendar:
                 sunset=self._sunset_of_day(gregorian_date),
                 next_sunrise=next_sunrise,
                 solar_event=solar_event,
-                days_since_epoch=days_since_epoch,
-                _day_index=day_index,
-                _week_index=week_index,
-                _block_index=block_index,
-                _year_index=year_index
+                index=Day.Index(
+                    year_of_calendar,
+                    block_of_year,
+                    week_of_block,
+                    day_of_week,
+                    day_of_calendar
+                )
             )
             yield day
             gregorian_date = gregorian_date + timedelta(days=1)
 
 
 def _group_weeks(days: Iterable[Day]) -> Iterable[Week]:
-    weeks_since_epoch = 0
-    for _, days_in_week in itertools.groupby(days, key=lambda day: (day._year_index, day._block_index, day._week_index)):
-        yield Week(list(days_in_week), weeks_since_epoch)
-        weeks_since_epoch += 1
+    week_of_calendar = 0
+    for _, days_in_week in itertools.groupby(days, key=lambda day: day.index.day_of_calendar):
+        days_in_week = list(days_in_week)
+        index = days_in_week[0].index
+        yield Week(days_in_week, Week.Index(
+            index.year_of_calendar,
+            index.block_of_year,
+            index.week_of_block,
+            week_of_calendar
+       ))
+        week_of_calendar += 1
 
 def _group_blocks(weeks: Iterable[Week]) -> Iterable[Block]:
-    blocks_since_epoch = 0
-    for _, weeks_in_block in itertools.groupby(weeks, key=lambda week: (week._year_index, week._block_index)):
-        yield Block(list(weeks_in_block), blocks_since_epoch)
-        blocks_since_epoch += 1
+    block_of_calendar = 0
+    for _, weeks_in_block in itertools.groupby(weeks, key=lambda week: week.index.week_of_calendar):
+        weeks_in_block = list(weeks_in_block)
+        index = weeks_in_block[0].index
+        yield Block(weeks_in_block, Block.Index(
+            index.year_of_calendar,
+            index.block_of_year,
+            block_of_calendar
+        ))
+        block_of_calendar += 1
 
 def _group_years(blocks: Iterable[Block]) -> Iterable[Year]:
-    years_since_epoch = 0
-    for _, blocks_in_year in itertools.groupby(blocks, key=lambda block: block._year_index):
-        yield Year(list(blocks_in_year), years_since_epoch)
-        years_since_epoch += 1
+    year_of_calendar = 0
+    for _, blocks_in_year in itertools.groupby(blocks, key=lambda block: block.index.block_of_calendar):
+        blocks_in_year = list(blocks_in_year)
+        yield Year(blocks_in_year, Year.Index(year_of_calendar))
+        year_of_calendar += 1
 
 def _sunrise_of_canonical_day(date) -> datetime:
     return astral.sun.sunrise(astral.Observer(CANONICAL_LATITUDE, CANONICAL_LONGITUDE), date, tzinfo=CANONICAL_TIMEZONE)
@@ -371,21 +387,23 @@ LAST_WEEK_OF_SEASON = 11
 def _calc_canonical_days() -> Iterable[Day]:
     assert Weekday.from_datetime(_sunrise_of_canonical_day(CANONICAL_EPOCH)) == Weekday.SUNDAY
     gregorian_date = CANONICAL_EPOCH
-    days_since_epoch = 0
-    day_index = 0
-    week_index = 0
-    block_index = 0
-    year_index = 0
+    year_of_calendar = 0
+    block_of_year = 0
+    week_of_block = 0
+    day_of_week = 0
+    day_of_calendar = 0
     day = Day(
         sunrise=_sunrise_of_canonical_day(gregorian_date),
         sunset=_sunset_of_canonical_day(gregorian_date),
         next_sunrise=_sunrise_of_canonical_day(gregorian_date + timedelta(days=1)),
         solar_event=None,
-        days_since_epoch=days_since_epoch,
-        _day_index=day_index,
-        _week_index=week_index,
-        _block_index=block_index,
-        _year_index=year_index
+        index=Day.Index(
+            year_of_calendar,
+            block_of_year,
+            week_of_block,
+            day_of_week,
+            day_of_calendar
+        )
     )
     yield day
     while True:
@@ -393,9 +411,9 @@ def _calc_canonical_days() -> Iterable[Day]:
         sunrise = _sunrise_of_canonical_day(gregorian_date)
         sunset = _sunset_of_canonical_day(gregorian_date)
         next_sunrise = _sunrise_of_canonical_day(gregorian_date + timedelta(days=1))
-        days_since_epoch += 1
-        if day_index == LAST_DAY_OF_WEEK:
-            day_index = 0
+        day_of_calendar += 1
+        if day_of_week == LAST_DAY_OF_WEEK:
+            day_of_week = 0
             if isinstance(day.block_type, Transition):
                 solar_events = [ solar_event for solar_event in SOLAR_EVENTS if abs(solar_event.time.date() - gregorian_date) <= timedelta(days=14) ]
                 if not solar_events:
@@ -403,30 +421,32 @@ def _calc_canonical_days() -> Iterable[Day]:
                 [ solar_event ] = solar_events
                 leap_week_threshold = _sunset_of_canonical_day(gregorian_date + timedelta(days=1))
                 if solar_event.time > leap_week_threshold: # insert a leap week
-                    week_index += 1
+                    week_of_block += 1
                 else:
-                    week_index = 0
+                    week_of_block = 0
                     if day.block_type == Transition.VERNAL_EQUINOX:
-                        block_index = 0
-                        year_index += 1
+                        block_of_year = 0
+                        year_of_calendar += 1
                     else:
-                        block_index += 1
-            elif isinstance(day.block_type, Season) and week_index == LAST_WEEK_OF_SEASON:
-                week_index = 0
-                block_index += 1
+                        block_of_year += 1
+            elif isinstance(day.block_type, Season) and week_of_block == LAST_WEEK_OF_SEASON:
+                week_of_block = 0
+                block_of_year += 1
             else:
-                week_index += 1
+                week_of_block += 1
         else:
-            day_index += 1
+            day_of_week += 1
         day = Day(
             sunrise=sunrise,
             sunset=sunset,
             next_sunrise=next_sunrise,
             solar_event=None,
-            days_since_epoch=days_since_epoch,
-            _day_index=day_index,
-            _week_index=week_index,
-            _block_index=block_index,
-            _year_index=year_index
+            index=Day.Index(
+                year_of_calendar,
+                block_of_year,
+                week_of_block,
+                day_of_week,
+                day_of_calendar
+            )
         )
         yield day
