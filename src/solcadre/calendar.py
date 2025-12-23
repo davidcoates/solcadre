@@ -2,8 +2,7 @@
 
 This module provides the core calendar functionality: generating localized days,
 weeks, blocks, and years aligned to solar events, as well as helpers to map
-arbitrary datetimes to Solcadre `Day`, `Week`, `Block`, `Year`, and `Time`
-objects.
+arbitrary datetimes to Solcadre Day, Week, Block, Year, and Time objects.
 """
 
 __all__ = [

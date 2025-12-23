@@ -35,7 +35,7 @@ class SolarEvent:
             timezone: A tzinfo or ZoneInfo to convert the event time into.
 
         Returns:
-            SolarEvent: A new SolarEvent instance with `time` adjusted to the
+            SolarEvent: A new SolarEvent instance with time localized to the
             provided timezone.
         """
         return SolarEvent(self.type, self.time.astimezone(timezone))
