@@ -1,5 +1,8 @@
 # Solcadre
 
+[![Documentation Status](https://readthedocs.org/projects/solcadre/badge/?version=latest)](https://solcadre.readthedocs.io/en/latest/)
+[![PyPI version](https://img.shields.io/pypi/v/solcadre.svg)](https://pypi.org/project/solcadre/)
+
 **Solcadre** is a week-based, solar-structured calendar system designed around how people actually organise their time.
 
 Human routines, work, and social life are overwhelmingly structured around the **week**. Solcadre takes the week as its fundamental unit, and builds the rest of the calendar around it.
@@ -7,6 +10,7 @@ Human routines, work, and social life are overwhelmingly structured around the *
 The year is divided into **four fixed 12-week seasons**, with **explicit transition weeks** between seasons.
 
 **See it in action:** https://solcadre.net
+**Documentation:** https://solcadre.readthedocs.io
 
 ---
 

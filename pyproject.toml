@@ -8,7 +8,7 @@ version = "0.1.3"
 description = "Solcadre System"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "MIT"
 authors = [{ name = "David Coates" }]
 keywords = ["calendar", "astronomy", "solstice", "equinox", "seasons", "week", "time", "cycle"]
 
@@ -16,9 +16,24 @@ dependencies = [
   "astral>=3.2",
 ]
 
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Office/Business :: Scheduling",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
 [project.urls]
 Homepage = "https://github.com/davidcoates/solcadre"
 Issues = "https://github.com/davidcoates/solcadre/issues"
+Documentation = "https://solcadre.readthedocs.io"
+"See it in action" = "https://solcadre.net"
 
 [project.optional-dependencies]
 docs = [

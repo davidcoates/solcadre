@@ -5,6 +5,15 @@
 - Python 3.10 or higher
 
 
+## Install from PyPI
+
+Install the latest release from PyPI:
+
+```bash
+pip install solcadre
+```
+
+
 ## Install from Source
 
 To install from source:
