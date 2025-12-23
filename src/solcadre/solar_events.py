@@ -17,7 +17,7 @@ class SolarEventType(Enum):
     SEPTEMBER_EQUINOX = auto()
 
 
-@dataclass
+@dataclass(frozen=True)
 class SolarEvent:
     """Represents a single solar event (a solstice or an equinox).
 
@@ -27,6 +27,18 @@ class SolarEvent:
     """
     type: SolarEventType
     time: datetime
+
+    def localize(self, timezone):
+        """Return this solar event converted to a given timezone.
+
+        Args:
+            timezone: A tzinfo or ZoneInfo to convert the event time into.
+
+        Returns:
+            SolarEvent: A new SolarEvent instance with `time` adjusted to the
+            provided timezone.
+        """
+        return SolarEvent(self.type, self.time.astimezone(timezone))
 
 
 SOLAR_EVENTS = [

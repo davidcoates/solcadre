@@ -122,7 +122,7 @@ class Calendar:
         day = self.find_day(time)
         if day is None:
             return None
-        return Time(day, day.time_of_day(time))
+        return Time(day, day.time_of_day(time.astimezone(self.timezone)))
 
     def find_day(self, time: datetime) -> Day | None:
         """Find the Day object that contains the given datetime.
@@ -325,7 +325,7 @@ class Calendar:
                 next_solar_event_index += 1
             solar_event = None
             if next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < next_sunrise:
-                solar_event = SOLAR_EVENTS[next_solar_event_index]
+                solar_event = SOLAR_EVENTS[next_solar_event_index].localize(self.timezone)
             day = Day(
                 sunrise=sunrise,
                 sunset=self._sunset_of_day(gregorian_date),
