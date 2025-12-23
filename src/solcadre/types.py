@@ -281,12 +281,7 @@ class Day:
         return TimeOfDay(datetime.time(), self.solar_phase(datetime))
 
     def __str__(self):
-        """Return a string representation of this day.
-
-        Returns:
-            str: A string in the format "year/block/week/weekday".
-        """
-        return f"{self.year_number}/{self.block_type.number}/{self.week_number}/{self.weekday.number}"
+        return f"{self.year_number:02}-{self.block_type.number:02}-{self.week_number:02}/{self.weekday.number:01}"
 
     def __eq__(self, other):
         return self.index.day_of_calendar == other.index.day_of_calendar
@@ -370,12 +365,7 @@ class Week:
         return self.days[-1].next_sunrise
 
     def __str__(self):
-        """Return a string representation of this week.
-
-        Returns:
-            str: A string in the format "year/block/week".
-        """
-        return f"{self.year_number}/{self.block_type.number}/{self.number}"
+        return f"{self.year_number:02}-{self.block_type.number:02}-{self.number:02}"
 
     def __eq__(self, other):
         return self.index.week_of_calendar == other.index.week_of_calendar
@@ -448,12 +438,7 @@ class Block:
         return self.weeks[-1].end
 
     def __str__(self):
-        """Return a string representation of this block.
-
-        Returns:
-            str: A string in the format "year/block".
-        """
-        return f"{self.year_number}/{self.type.number}"
+        return f"{self.year_number:02}-{self.type.number:02}"
 
     def __eq__(self, other):
         return self.index.block_of_calendar == other.index.block_of_calendar
@@ -514,12 +499,7 @@ class Year:
         return self.blocks[-1].end
 
     def __str__(self):
-        """Return a string representation of this year.
-
-        Returns:
-            str: A string containing the year number.
-        """
-        return f"{self.number}"
+        return f"{self.number:02}"
 
     def __eq__(self, other):
         return self.index.year_of_calendar == other.index.year_of_calendar
