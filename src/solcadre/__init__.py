@@ -1,20 +1,20 @@
 __all__ = [
-    "SolarEventType",
-    "SolarEvent",
-    "Season",
-    "Transition",
-    "BlockType",
-    "Weekday",
-    "SolarPhase",
-    "TimeOfDay",
-    "Day",
-    "Week",
     "Block",
-    "Year",
-    "Time",
+    "BlockType",
+    "Calendar",
+    "Day",
     "Hemisphere",
     "InvalidLatitude",
-    "Calendar"
+    "Season",
+    "SolarEvent",
+    "SolarEventType",
+    "SolarPhase",
+    "Time",
+    "TimeOfDay",
+    "Transition",
+    "Week",
+    "Weekday",
+    "Year",
 ]
 __version__ = "0.1.6"
 

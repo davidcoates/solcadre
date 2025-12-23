@@ -6,19 +6,19 @@ and the structural Day/Week/Block/Year objects.
 """
 
 __all__ = [
-    "Season",
-    "Transition",
-    "BlockType",
-    "block_type_from_index",
-    "Weekday",
-    "SolarPhase",
-    "TimeOfDay",
-    "Day",
-    "Week",
     "Block",
-    "Year",
+    "BlockType",
+    "Day",
+    "Hemisphere",
+    "Season",
+    "SolarPhase",
     "Time",
-    "Hemisphere"
+    "TimeOfDay",
+    "Transition",
+    "Week",
+    "Weekday",
+    "Year",
+    "block_type_from_index",
 ]
 
 from dataclasses import dataclass

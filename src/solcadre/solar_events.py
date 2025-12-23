@@ -1,7 +1,7 @@
 __all__ = [
-    "SolarEventType",
+    "SOLAR_EVENTS",
     "SolarEvent",
-    "SOLAR_EVENTS"
+    "SolarEventType",
 ]
 
 from dataclasses import dataclass
