@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "solcadre"
-version = "0.1.2"
+version = "0.1.3"
 description = "Solcadre System"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "David Coates" }]
 keywords = ["calendar", "astronomy", "solstice", "equinox", "seasons", "week", "time", "cycle"]
@@ -19,9 +19,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/davidcoates/solcadre"
 Issues = "https://github.com/davidcoates/solcadre/issues"
-
-[project.scripts]
-solcadre = "solcadre.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/solcadre"]

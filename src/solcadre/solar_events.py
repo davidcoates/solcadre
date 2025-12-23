@@ -1,10 +1,12 @@
-__all__ = ["SolarEventType", "SolarEvent", "SOLAR_EVENTS"]
+__all__ = [
+    "SolarEventType",
+    "SolarEvent",
+    "SOLAR_EVENTS"
+]
 
 from dataclasses import dataclass
 from datetime import date, datetime, timezone, timedelta
 from enum import Enum, auto
-
-from .format import format_time
 
 
 class SolarEventType(Enum):
@@ -13,9 +15,6 @@ class SolarEventType(Enum):
     MARCH_EQUINOX = auto()
     JUNE_SOLSTICE = auto()
     SEPTEMBER_EQUINOX = auto()
-
-    def __str__(self):
-        return self.name.title().replace('_', ' ')
 
 
 @dataclass
@@ -28,9 +27,6 @@ class SolarEvent:
     """
     type: SolarEventType
     time: datetime
-
-    def __str__(self):
-        return f"{self.type} at {format_time(self.time)}"
 
 
 SOLAR_EVENTS = [

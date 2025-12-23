@@ -5,15 +5,19 @@ __all__ = [
     "Transition",
     "BlockType",
     "Weekday",
+    "SolarPhase",
+    "TimeOfDay",
     "Day",
     "Week",
     "Block",
     "Year",
+    "Time",
     "Hemisphere",
-    "Calendar",
-    "InvalidLatitude"
+    "InvalidLatitude",
+    "Calendar"
 ]
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
-from .core import *
+from .types import *
+from .calendar import *
 from .solar_events import *
