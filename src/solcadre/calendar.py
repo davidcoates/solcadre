@@ -344,7 +344,7 @@ class Calendar:
 
 def _group_weeks(days: Iterable[Day]) -> Iterable[Week]:
     week_of_calendar = 0
-    for _, days_in_week in itertools.groupby(days, key=lambda day: day.index.day_of_calendar):
+    for _, days_in_week in itertools.groupby(days, key=lambda day: (day.index.year_of_calendar, day.index.block_of_year, day.index.week_of_block)):
         days_in_week = list(days_in_week)
         index = days_in_week[0].index
         yield Week(days_in_week, Week.Index(
@@ -357,7 +357,7 @@ def _group_weeks(days: Iterable[Day]) -> Iterable[Week]:
 
 def _group_blocks(weeks: Iterable[Week]) -> Iterable[Block]:
     block_of_calendar = 0
-    for _, weeks_in_block in itertools.groupby(weeks, key=lambda week: week.index.week_of_calendar):
+    for _, weeks_in_block in itertools.groupby(weeks, key=lambda week: (week.index.year_of_calendar, week.index.block_of_year)):
         weeks_in_block = list(weeks_in_block)
         index = weeks_in_block[0].index
         yield Block(weeks_in_block, Block.Index(
@@ -369,7 +369,7 @@ def _group_blocks(weeks: Iterable[Week]) -> Iterable[Block]:
 
 def _group_years(blocks: Iterable[Block]) -> Iterable[Year]:
     year_of_calendar = 0
-    for _, blocks_in_year in itertools.groupby(blocks, key=lambda block: block.index.block_of_calendar):
+    for _, blocks_in_year in itertools.groupby(blocks, key=lambda block: block.index.year_of_calendar):
         blocks_in_year = list(blocks_in_year)
         yield Year(blocks_in_year, Year.Index(year_of_calendar))
         year_of_calendar += 1
