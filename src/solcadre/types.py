@@ -60,6 +60,9 @@ class Season(Enum):
         """
         return self.value + 1
 
+    def __str__(self):
+        return f"{(self.value // 2) + 1}S"
+
 
 class Transition(Enum):
     """Enumeration of the four Solcadre transitions."""
@@ -92,6 +95,9 @@ class Transition(Enum):
             int: The block number (1-8).
         """
         return self.value + 1
+
+    def __str__(self):
+        return f"{(self.value // 2) + 1}T"
 
 
 type BlockType = Season | Transition
@@ -153,6 +159,9 @@ class SolarPhase(Enum):
             case SolarPhase.NIGHT: return 'N'
             case _: assert False
 
+    def __str__(self):
+        return self.abbreviation
+
 
 @dataclass(frozen=True)
 class TimeOfDay:
@@ -161,7 +170,7 @@ class TimeOfDay:
     solar_phase: SolarPhase
 
     def __str__(self):
-        return f"{self.time} {self.solar_phase.abbreviation}"
+        return f"{self.time} {self.solar_phase}"
 
 
 @dataclass(frozen=True)
@@ -281,7 +290,7 @@ class Day:
         return TimeOfDay(datetime.time(), self.solar_phase(datetime))
 
     def __str__(self):
-        return f"{self.year_number:02}-{self.block_type.number:02}-{self.week_number:02}/{self.weekday.number:01}"
+        return f"{self.year_number:02}-{self.block_type}-{self.week_number:02}/{self.weekday.number:01}"
 
     def __eq__(self, other):
         return self.index.day_of_calendar == other.index.day_of_calendar
@@ -365,7 +374,7 @@ class Week:
         return self.days[-1].next_sunrise
 
     def __str__(self):
-        return f"{self.year_number:02}-{self.block_type.number:02}-{self.number:02}"
+        return f"{self.year_number:02}-{self.block_type}-{self.number:02}"
 
     def __eq__(self, other):
         return self.index.week_of_calendar == other.index.week_of_calendar
