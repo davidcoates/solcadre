@@ -1,4 +1,5 @@
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 import pytest
 
 from solcadre.types import (
@@ -6,9 +7,11 @@ from solcadre.types import (
     Transition,
     block_type_from_index,
     Weekday,
-    SolarPhase,
+    Meridiem,
     Day,
 )
+
+SYDNEY = ZoneInfo("Australia/Sydney")
 
 
 def test_season_flip_next_number():
@@ -32,13 +35,15 @@ def test_weekday_from_datetime():
 
 
 def test_day_time_of_day_and_str():
-    sunrise = datetime(2024, 1, 1, 6, 0)
-    sunset = datetime(2024, 1, 1, 18, 0)
-    next_sunrise = datetime(2024, 1, 2, 6, 0)
+    solar_midnight = datetime(2024, 1, 1, 0, 0, tzinfo=SYDNEY)
+    solar_noon = datetime(2024, 1, 1, 12, 0, tzinfo=SYDNEY)
+    next_solar_midnight = datetime(2024, 1, 2, 0, 0, tzinfo=SYDNEY)
     day = Day(
-        sunrise=sunrise,
-        sunset=sunset,
-        next_sunrise=next_sunrise,
+        solar_midnight=solar_midnight,
+        solar_noon=solar_noon,
+        next_solar_midnight=next_solar_midnight,
+        sunrise=datetime(2024, 1, 1, 6, 0, tzinfo=SYDNEY),
+        sunset=datetime(2024, 1, 1, 20, 0, tzinfo=SYDNEY),
         solar_event=None,
         index=Day.Index(
             year_of_calendar=0,
@@ -49,13 +54,17 @@ def test_day_time_of_day_and_str():
         ),
     )
     with pytest.raises(AssertionError):
-        day.solar_phase(sunrise - timedelta(microseconds=1))
-    assert day.solar_phase(sunrise) == SolarPhase.DAY
-    assert day.solar_phase(sunrise + timedelta(microseconds=1)) == SolarPhase.DAY
-    assert day.solar_phase(sunset) == SolarPhase.DAY
-    assert day.solar_phase(sunset + timedelta(microseconds=1)) == SolarPhase.NIGHT
-    assert day.solar_phase(next_sunrise - timedelta(microseconds=1)) == SolarPhase.NIGHT
+        day.meridiem(solar_midnight - timedelta(microseconds=1))
     with pytest.raises(AssertionError):
-        day.solar_phase(next_sunrise)
-    assert day.time_of_day(sunrise).time == time(6, 0)
-    assert str(day) == "01-01-01/1"
+        day.meridiem(next_solar_midnight)
+
+    assert day.meridiem(solar_midnight) == Meridiem.ANTE
+    assert day.meridiem(solar_noon - timedelta(microseconds=1)) == Meridiem.ANTE
+    assert day.meridiem(solar_noon) == Meridiem.POST
+    assert day.meridiem(next_solar_midnight - timedelta(microseconds=1)) == Meridiem.POST
+
+    assert day.date == date(2024, 1, 1)
+    assert day.start == solar_midnight
+    assert day.end == next_solar_midnight
+    assert day.time_of_day(solar_midnight).time == time(0, 0)
+    assert str(day) == "01-1S-01/1"

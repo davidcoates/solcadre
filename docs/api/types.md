@@ -1,6 +1,6 @@
 # Types Module
 
-The `solcadre.types` module defines the core data structures for the Solcadre calendar: seasons, transitions, weekdays, solar phases, time-of-day helpers, and the Day/Week/Block/Year/Time objects.
+The `solcadre.types` module defines the core data structures for the Solcadre calendar: seasons, transitions, weekdays, meridiems, time-of-day helpers, and the Day/Week/Block/Year/Time objects.
 
 ::: solcadre.types
     options:
@@ -32,7 +32,7 @@ The `solcadre.types` module defines the core data structures for the Solcadre ca
       show_source: true
       heading_level: 2
 
-::: solcadre.types.SolarPhase
+::: solcadre.types.Meridiem
     options:
       show_root_heading: true
       show_root_toc_entry: true

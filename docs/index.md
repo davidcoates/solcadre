@@ -34,5 +34,5 @@ Solcadre makes that implicit structure explicit. By keeping weeks intact and gro
 
 ## Implementation
 
-This library implements the Solcadre calendar system. Calendars are localised by timezone, latitude, and longitude. Days are defined from sunrise to the following sunrise, allowing day boundaries to follow the local solar cycle rather than the civil clock.
+This library implements the Solcadre calendar system. Calendars are localised by timezone, latitude, and longitude. Days are defined from solar midnight to the following solar midnight, allowing day boundaries to follow the local solar cycle rather than the civil clock.
 

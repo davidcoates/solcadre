@@ -7,7 +7,6 @@ arbitrary datetimes to Solcadre Day, Week, Block, Year, and Time objects.
 
 __all__ = [
     "Calendar",
-    "InvalidLatitude",
 ]
 
 import astral
@@ -75,28 +74,13 @@ class LazyList:
         return item
 
 
-class InvalidLatitude(Exception):
-    """Exception raised when a latitude value is invalid for Solcadre.
-
-    This occurs when the latitude is too close to the poles, resulting in days
-    where sunrise or sunset cannot be calculated.
-
-    Args:
-        latitude: The invalid latitude value.
-        message: Additional error message describing why the latitude is invalid.
-    """
-
-    def __init__(self, latitude, message):
-        super().__init__(f"latitude({latitude}) is invalid: {message}")
-
-
 @dataclass
 class Calendar:
     """Calendar system that calculates days based on solar events and geographic location.
 
-    The calendar generates a sequence of days based on sunrise/sunset times for
-    a given location. Seasons and transitions are automatically adjusted based on
-    the hemisphere.
+    The calendar generates a sequence of days bounded by solar midnight for a
+    given location, defined at any latitude including the poles. Seasons and
+    transitions are automatically adjusted based on the hemisphere.
 
    Attributes:
         latitude: The latitude for solar calculations (defaults to canonical).
@@ -289,17 +273,23 @@ class Calendar:
         assert year is not None
         return year
 
-    def _sunrise_of_day(self, date) -> datetime:
+    def _sunrise_of_day(self, date) -> datetime | None:
         try:
             return astral.sun.sunrise(self.observer, date, tzinfo=self.timezone)
         except ValueError:
-            raise InvalidLatitude(self.latitude, f"no sunrise on date({date})")
+            return None
 
-    def _sunset_of_day(self, date) -> datetime:
+    def _sunset_of_day(self, date) -> datetime | None:
         try:
             return astral.sun.sunset(self.observer, date, tzinfo=self.timezone)
         except ValueError:
-            raise InvalidLatitude(self.latitude, f"no sunset on date({date})")
+            return None
+
+    def _solar_midnight_of_day(self, date) -> datetime:
+        return astral.sun.midnight(self.observer, date, tzinfo=self.timezone)
+
+    def _solar_noon_of_day(self, date) -> datetime:
+        return astral.sun.noon(self.observer, date, tzinfo=self.timezone)
 
     def _calc_localized_days(self) -> Iterable[Day]:
         canonical_days = _calc_canonical_days()
@@ -307,7 +297,7 @@ class Calendar:
         if self.hemisphere == Hemisphere.NORTHERN:
             offset = 2 * (12 + 1) * 7 # skip ahead half a year
             canonical_days = itertools.islice(canonical_days, offset, None)
-        match Weekday.from_datetime(self._sunrise_of_day(CANONICAL_EPOCH + timedelta(days=offset))):
+        match Weekday.from_datetime(self._solar_noon_of_day(CANONICAL_EPOCH + timedelta(days=offset))):
             case Weekday.MONDAY:
                 gregorian_offset = offset - 1
             case Weekday.SUNDAY:
@@ -317,7 +307,7 @@ class Calendar:
             case _:
                 assert False
         gregorian_date = CANONICAL_EPOCH + timedelta(days=gregorian_offset)
-        assert Weekday.from_datetime(self._sunrise_of_day(gregorian_date)) == Weekday.SUNDAY
+        assert Weekday.from_datetime(self._solar_noon_of_day(gregorian_date)) == Weekday.SUNDAY
         assert offset >= 0
         year_of_calendar = -1
         next_solar_event_index = 0
@@ -329,17 +319,19 @@ class Calendar:
                 block_of_year = block_type_from_index(block_of_year).flip().value
             if block_type_from_index(block_of_year) == Season.GREENTIDE and week_of_block == 0 and day_of_week == 0:
                 year_of_calendar += 1
-            sunrise = self._sunrise_of_day(gregorian_date)
-            next_sunrise = self._sunrise_of_day(gregorian_date + timedelta(days=1))
-            while next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < sunrise:
+            solar_midnight = self._solar_midnight_of_day(gregorian_date)
+            next_solar_midnight = self._solar_midnight_of_day(gregorian_date + timedelta(days=1))
+            while next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < solar_midnight:
                 next_solar_event_index += 1
             solar_event = None
-            if next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < next_sunrise:
+            if next_solar_event_index < len(SOLAR_EVENTS) and SOLAR_EVENTS[next_solar_event_index].time < next_solar_midnight:
                 solar_event = SOLAR_EVENTS[next_solar_event_index].localize(self.timezone)
             day = Day(
-                sunrise=sunrise,
+                solar_midnight=solar_midnight,
+                solar_noon=self._solar_noon_of_day(gregorian_date),
+                next_solar_midnight=next_solar_midnight,
+                sunrise=self._sunrise_of_day(gregorian_date),
                 sunset=self._sunset_of_day(gregorian_date),
-                next_sunrise=next_sunrise,
                 solar_event=solar_event,
                 index=Day.Index(
                     year_of_calendar,
@@ -391,11 +383,17 @@ def _sunrise_of_canonical_day(date) -> datetime:
 def _sunset_of_canonical_day(date) -> datetime:
     return astral.sun.sunset(astral.Observer(CANONICAL_LATITUDE, CANONICAL_LONGITUDE), date, tzinfo=CANONICAL_TIMEZONE)
 
+def _solar_midnight_of_canonical_day(date) -> datetime:
+    return astral.sun.midnight(astral.Observer(CANONICAL_LATITUDE, CANONICAL_LONGITUDE), date, tzinfo=CANONICAL_TIMEZONE)
+
+def _solar_noon_of_canonical_day(date) -> datetime:
+    return astral.sun.noon(astral.Observer(CANONICAL_LATITUDE, CANONICAL_LONGITUDE), date, tzinfo=CANONICAL_TIMEZONE)
+
 LAST_DAY_OF_WEEK = 7 - 1
 LAST_WEEK_OF_SEASON = 11
 
 def _calc_canonical_days() -> Iterable[Day]:
-    assert Weekday.from_datetime(_sunrise_of_canonical_day(CANONICAL_EPOCH)) == Weekday.SUNDAY
+    assert Weekday.from_datetime(_solar_noon_of_canonical_day(CANONICAL_EPOCH)) == Weekday.SUNDAY
     gregorian_date = CANONICAL_EPOCH
     year_of_calendar = 0
     block_of_year = 0
@@ -403,9 +401,11 @@ def _calc_canonical_days() -> Iterable[Day]:
     day_of_week = 0
     day_of_calendar = 0
     day = Day(
+        solar_midnight=_solar_midnight_of_canonical_day(gregorian_date),
+        solar_noon=_solar_noon_of_canonical_day(gregorian_date),
+        next_solar_midnight=_solar_midnight_of_canonical_day(gregorian_date + timedelta(days=1)),
         sunrise=_sunrise_of_canonical_day(gregorian_date),
         sunset=_sunset_of_canonical_day(gregorian_date),
-        next_sunrise=_sunrise_of_canonical_day(gregorian_date + timedelta(days=1)),
         solar_event=None,
         index=Day.Index(
             year_of_calendar,
@@ -420,7 +420,8 @@ def _calc_canonical_days() -> Iterable[Day]:
         gregorian_date = gregorian_date + timedelta(days=1)
         sunrise = _sunrise_of_canonical_day(gregorian_date)
         sunset = _sunset_of_canonical_day(gregorian_date)
-        next_sunrise = _sunrise_of_canonical_day(gregorian_date + timedelta(days=1))
+        solar_midnight = _solar_midnight_of_canonical_day(gregorian_date)
+        next_solar_midnight = _solar_midnight_of_canonical_day(gregorian_date + timedelta(days=1))
         day_of_calendar += 1
         if day_of_week == LAST_DAY_OF_WEEK:
             day_of_week = 0
@@ -447,9 +448,11 @@ def _calc_canonical_days() -> Iterable[Day]:
         else:
             day_of_week += 1
         day = Day(
+            solar_midnight=solar_midnight,
+            solar_noon=_solar_noon_of_canonical_day(gregorian_date),
+            next_solar_midnight=next_solar_midnight,
             sunrise=sunrise,
             sunset=sunset,
-            next_sunrise=next_sunrise,
             solar_event=None,
             index=Day.Index(
                 year_of_calendar,

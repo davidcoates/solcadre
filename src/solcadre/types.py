@@ -1,8 +1,8 @@
 """Core data types for the Solcadre calendar system.
 
 This module defines the fundamental enums and dataclasses that make up the
-calendar: seasons, transitions, weekdays, solar phases, time-of-day helpers,
-and the structural Day/Week/Block/Year objects.
+calendar: seasons, transitions, weekdays, time-of-day helpers, and the
+structural Day/Week/Block/Year objects.
 """
 
 __all__ = [
@@ -10,8 +10,8 @@ __all__ = [
     "BlockType",
     "Day",
     "Hemisphere",
+    "Meridiem",
     "Season",
-    "SolarPhase",
     "Time",
     "TimeOfDay",
     "Transition",
@@ -146,17 +146,22 @@ class Weekday(Enum):
         return self.value + 1
 
 
-class SolarPhase(Enum):
-    """Whether a given moment in a Solcadre day is during daylight or night."""
-    DAY = auto()
-    NIGHT = auto()
+class Meridiem(Enum):
+    """Whether a given moment falls before or after a day's solar noon.
+
+    The literal, etymological meaning of ante/post meridiem: before or
+    after the sun's transit, rather than before or after the clock reads
+    12:00.
+    """
+    ANTE = auto()
+    POST = auto()
 
     @property
     def abbreviation(self) -> str:
-        """Single-letter abbreviation for the phase."""
+        """Single-letter abbreviation for the meridiem."""
         match self:
-            case SolarPhase.DAY:   return 'D'
-            case SolarPhase.NIGHT: return 'N'
+            case Meridiem.ANTE: return 'A'
+            case Meridiem.POST: return 'P'
             case _: assert False
 
     def __str__(self):
@@ -165,31 +170,37 @@ class SolarPhase(Enum):
 
 @dataclass(frozen=True)
 class TimeOfDay:
-    """Clock time within a day plus whether it is day or night."""
+    """Civil time within a day plus its meridiem."""
     time: time
-    solar_phase: SolarPhase
+    meridiem: Meridiem
 
     def __str__(self):
-        return f"{self.time} {self.solar_phase}"
+        return f"{self.time} {self.meridiem}"
 
 
 @dataclass(frozen=True)
 class Day:
     """Represents a day in the Solcadre calendar.
 
-    A day is defined by its solar events (sunrise, sunset) and its position
-    within the calendar structure (year, block, day of block).
+    A day is defined by solar midnight to the next solar midnight, and its
+    position within the calendar structure (year, block, day of block).
 
     Attributes:
-        sunrise: The datetime of sunrise for this day.
-        sunset: The datetime of sunset for this day.
-        next_sunrise: The datetime of sunrise for the next day.
+        solar_midnight: The datetime of solar midnight marking the start of this day.
+        solar_noon: The datetime of solar noon for this day.
+        next_solar_midnight: The datetime of solar midnight marking the end of this day.
+        sunrise: The datetime of sunrise for this day, or None if the sun does not
+            rise on this day (polar day/night).
+        sunset: The datetime of sunset for this day, or None if the sun does not
+            set on this day (polar day/night).
         solar_event: Optional SolarEvent that occurs on this day, if any.
         index: Day.Index locating this day within the calendar.
     """
-    sunrise: datetime
-    sunset: datetime
-    next_sunrise: datetime
+    solar_midnight: datetime
+    solar_noon: datetime
+    next_solar_midnight: datetime
+    sunrise: datetime | None
+    sunset: datetime | None
     solar_event: SolarEvent | None
 
     @dataclass(frozen=True)
@@ -212,34 +223,34 @@ class Day:
     index: Index
 
     def __post_init__(self):
-        assert self.sunrise.date() == self.sunset.date()
+        assert self.solar_midnight < self.solar_noon < self.next_solar_midnight
 
     @property
     def date(self) -> date:
-        """Get the date of this day.
+        """Get the civil date of this day.
 
         Returns:
-            date: The date corresponding to this day's sunrise.
+            date: The civil date of solar noon.
         """
-        return self.sunrise.date()
+        return self.solar_noon.date()
 
     @property
     def start(self) -> datetime:
         """Get the start datetime of this day.
 
         Returns:
-            datetime: The sunrise datetime marking the start of the day.
+            datetime: The solar midnight datetime marking the start of the day.
         """
-        return self.sunrise
+        return self.solar_midnight
 
     @property
     def end(self) -> datetime:
         """Get the end datetime of this day.
 
         Returns:
-            datetime: The sunrise datetime marking the end of the day.
+            datetime: The solar midnight datetime marking the end of the day.
         """
-        return self.next_sunrise
+        return self.next_solar_midnight
 
     @property
     def weekday(self) -> Weekday:
@@ -281,13 +292,13 @@ class Day:
     def days_since_epoch(self) -> int:
         return self.index.day_of_calendar
 
-    def solar_phase(self, datetime: datetime) -> SolarPhase:
+    def meridiem(self, datetime: datetime) -> Meridiem:
         assert self.start <= datetime < self.end
-        return SolarPhase.DAY if datetime <= self.sunset else SolarPhase.NIGHT
+        return Meridiem.ANTE if datetime < self.solar_noon else Meridiem.POST
 
     def time_of_day(self, datetime: datetime) -> TimeOfDay:
         assert self.start <= datetime < self.end
-        return TimeOfDay(datetime.time(), self.solar_phase(datetime))
+        return TimeOfDay(datetime.time(), self.meridiem(datetime))
 
     def __str__(self):
         return f"{self.year_number:02}-{self.block_type}-{self.week_number:02}/{self.weekday.number:01}"
@@ -360,18 +371,18 @@ class Week:
         """Get the start datetime of this week.
 
         Returns:
-            datetime: The sunrise datetime marking the start of the first day of the week.
+            datetime: The solar midnight datetime marking the start of the first day of the week.
         """
-        return self.days[0].sunrise
+        return self.days[0].start
 
     @property
     def end(self) -> datetime:
         """Get the end datetime of this week.
 
         Returns:
-            datetime: The sunrise datetime marking the end of the last day of the week.
+            datetime: The solar midnight datetime marking the end of the last day of the week.
         """
-        return self.days[-1].next_sunrise
+        return self.days[-1].end
 
     def __str__(self):
         return f"{self.year_number:02}-{self.block_type}-{self.number:02}"
@@ -433,7 +444,7 @@ class Block:
         """Get the start datetime of this block.
 
         Returns:
-            datetime: The sunrise datetime marking the start of the first day of the block.
+            datetime: The solar midnight datetime marking the start of the first day of the block.
         """
         return self.weeks[0].start
 
@@ -442,7 +453,7 @@ class Block:
         """Get the end datetime of this block.
 
         Returns:
-            datetime: The sunrise datetime marking the end of the last day of the block.
+            datetime: The solar midnight datetime marking the end of the last day of the block.
         """
         return self.weeks[-1].end
 
@@ -494,7 +505,7 @@ class Year:
         """Get the start datetime of this year.
 
         Returns:
-            datetime: The sunrise datetime marking the start of the first day of the year.
+            datetime: The solar midnight datetime marking the start of the first day of the year.
         """
         return self.blocks[0].start
 
@@ -503,7 +514,7 @@ class Year:
         """Get the end datetime of this year.
 
         Returns:
-            datetime: The sunrise datetime marking the end of the last day of the year.
+            datetime: The solar midnight datetime marking the end of the last day of the year.
         """
         return self.blocks[-1].end
 
