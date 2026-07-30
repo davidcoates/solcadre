@@ -15,7 +15,7 @@ __all__ = [
     "Weekday",
     "Year",
 ]
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 
 from .types import *
 from .calendar import *
