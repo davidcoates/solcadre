@@ -39,13 +39,6 @@ The `solcadre.types` module defines the core data structures for the Solcadre ca
       show_source: true
       heading_level: 2
 
-::: solcadre.types.Hemisphere
-    options:
-      show_root_heading: true
-      show_root_toc_entry: true
-      show_source: true
-      heading_level: 2
-
 ## Helpers
 
 ::: solcadre.types.block_type_from_index

@@ -21,7 +21,6 @@ from .solar_events import SOLAR_EVENTS
 from .types import (
     Block,
     Day,
-    Hemisphere,
     Season,
     Time,
     Transition,
@@ -79,15 +78,14 @@ class Calendar:
     """Calendar system that calculates days based on solar events and geographic location.
 
     The calendar generates a sequence of days bounded by solar midnight for a
-    given location, defined at any latitude including the poles. Seasons and
-    transitions are automatically adjusted based on the hemisphere.
+    given location, defined at any latitude including the poles. Every location
+    shares the same epoch and block structure, regardless of hemisphere.
 
    Attributes:
         latitude: The latitude for solar calculations (defaults to canonical).
         longitude: The longitude for solar calculations (defaults to canonical).
         timezone: The timezone for solar calculations (defaults to canonical).
         observer: Astral observer object for solar calculations.
-        hemisphere: The hemisphere determined from latitude.
         epoch: The first day of the calendar.
     """
     latitude: float = CANONICAL_LATITUDE
@@ -95,9 +93,8 @@ class Calendar:
     timezone: zoneinfo.ZoneInfo = CANONICAL_TIMEZONE
 
     def __post_init__(self):
-        """Initialize the calendar with observer, hemisphere, and cached iterators."""
+        """Initialize the calendar with observer and cached iterators."""
         self.observer = astral.Observer(self.latitude, self.longitude)
-        self.hemisphere = Hemisphere.NORTHERN if self.latitude > 0 else Hemisphere.SOUTHERN
         self._days = LazyList(self._calc_localized_days())
         self._weeks = LazyList(_group_weeks(self.iter_days()))
         self._blocks = LazyList(_group_blocks(self.iter_weeks()))
@@ -293,31 +290,24 @@ class Calendar:
 
     def _calc_localized_days(self) -> Iterable[Day]:
         canonical_days = _calc_canonical_days()
-        offset = 0
-        if self.hemisphere == Hemisphere.NORTHERN:
-            offset = 2 * (12 + 1) * 7 # skip ahead half a year
-            canonical_days = itertools.islice(canonical_days, offset, None)
-        match Weekday.from_datetime(self._solar_noon_of_day(CANONICAL_EPOCH + timedelta(days=offset))):
+        match Weekday.from_datetime(self._solar_noon_of_day(CANONICAL_EPOCH)):
             case Weekday.MONDAY:
-                gregorian_offset = offset - 1
+                gregorian_offset = -1
             case Weekday.SUNDAY:
-                gregorian_offset = offset
+                gregorian_offset = 0
             case Weekday.SATURDAY:
-                gregorian_offset = offset + 1
+                gregorian_offset = 1
             case _:
                 assert False
         gregorian_date = CANONICAL_EPOCH + timedelta(days=gregorian_offset)
         assert Weekday.from_datetime(self._solar_noon_of_day(gregorian_date)) == Weekday.SUNDAY
-        assert offset >= 0
         year_of_calendar = -1
         next_solar_event_index = 0
         for day_of_calendar, canonical_day in enumerate(canonical_days):
             day_of_week = canonical_day.index.day_of_week
             week_of_block = canonical_day.index.week_of_block
             block_of_year = canonical_day.index.block_of_year
-            if self.hemisphere == Hemisphere.NORTHERN:
-                block_of_year = block_type_from_index(block_of_year).flip().value
-            if block_type_from_index(block_of_year) == Season.GREENTIDE and week_of_block == 0 and day_of_week == 0:
+            if block_type_from_index(block_of_year) == Season.ONE and week_of_block == 0 and day_of_week == 0:
                 year_of_calendar += 1
             solar_midnight = self._solar_midnight_of_day(gregorian_date)
             next_solar_midnight = self._solar_midnight_of_day(gregorian_date + timedelta(days=1))
@@ -435,7 +425,7 @@ def _calc_canonical_days() -> Iterable[Day]:
                     week_of_block += 1
                 else:
                     week_of_block = 0
-                    if day.block_type == Transition.VERNAL_EQUINOX:
+                    if day.block_type == Transition.FOUR:
                         block_of_year = 0
                         year_of_calendar += 1
                     else:

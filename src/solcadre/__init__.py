@@ -3,7 +3,6 @@ __all__ = [
     "BlockType",
     "Calendar",
     "Day",
-    "Hemisphere",
     "Meridiem",
     "Season",
     "SolarEvent",

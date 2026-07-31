@@ -14,19 +14,22 @@ from solcadre.types import (
 SYDNEY = ZoneInfo("Australia/Sydney")
 
 
-def test_season_flip_next_number():
-    assert Season.GREENTIDE.flip() == Season.EMBERWANE
-    assert Season.GREENTIDE.next() == Transition.SUMMER_SOLSTICE
+def test_season_next_number():
+    assert Season.ONE.next() == Transition.ONE
+    assert Season.TWO.number == 2
 
 
-def test_transition_flip_next_number():
-    assert Transition.SUMMER_SOLSTICE.flip() == Transition.WINTER_SOLSTICE
-    assert Transition.SUMMER_SOLSTICE.next() == Season.SUNCREST
+def test_transition_next_number():
+    assert Transition.ONE.next() == Season.TWO
+    assert Transition.FOUR.next() == Season.ONE
+    assert Transition.TWO.number == 2
 
 
 def test_block_type_from_index():
-    assert block_type_from_index(0) == Season.GREENTIDE
-    assert block_type_from_index(1) == Transition.SUMMER_SOLSTICE
+    assert block_type_from_index(0) == Season.ONE
+    assert block_type_from_index(1) == Transition.ONE
+    assert block_type_from_index(2) == Season.TWO
+    assert block_type_from_index(3) == Transition.TWO
 
 
 def test_weekday_from_datetime():

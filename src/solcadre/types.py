@@ -9,7 +9,6 @@ __all__ = [
     "Block",
     "BlockType",
     "Day",
-    "Hemisphere",
     "Meridiem",
     "Season",
     "Time",
@@ -30,74 +29,58 @@ from .solar_events import SolarEvent
 
 class Season(Enum):
     """Enumeration of the four Solcadre seasons."""
-    GREENTIDE = 0
-    SUNCREST = 2
-    EMBERWANE = 4
-    FROSTFALL = 6
-
-    def flip(self):
-        """Return the opposite season (180 degrees in the cycle).
-
-        Returns:
-            Season: The season opposite to this one in the cycle.
-        """
-        return Season((self.value + 4) % 8)
+    ONE = 0
+    TWO = 1
+    THREE = 2
+    FOUR = 3
 
     def next(self):
-        """Return the next transition that follows this season.
+        """Return the transition that follows this season.
 
         Returns:
             Transition: The transition that comes after this season.
         """
-        return Transition(self.value + 1)
+        return Transition(self.value)
 
     @property
     def number(self):
-        """Get the block number (1-indexed).
+        """Get the season number (1-indexed).
 
         Returns:
-            int: The block number (1-8).
+            int: The season number (1-4).
         """
         return self.value + 1
 
     def __str__(self):
-        return f"{(self.value // 2) + 1}S"
+        return f"{self.number}S"
 
 
 class Transition(Enum):
     """Enumeration of the four Solcadre transitions."""
-    SUMMER_SOLSTICE = 1
-    AUTUMNAL_EQUINOX = 3
-    WINTER_SOLSTICE = 5
-    VERNAL_EQUINOX = 7
-
-    def flip(self):
-        """Return the opposite transition (180 degrees in the cycle).
-
-        Returns:
-            Transition: The transition opposite to this one in the cycle.
-        """
-        return Transition((self.value + 4) % 8)
+    ONE = 0
+    TWO = 1
+    THREE = 2
+    FOUR = 3
 
     def next(self):
-        """Return the next season that follows this transition.
+        """Return the season that follows this transition.
 
         Returns:
             Season: The season that comes after this transition.
         """
-        return Season((self.value + 1) % 8)
+        return Season((self.value + 1) % 4)
 
     @property
     def number(self):
-        """Get the block number (1-indexed).
+        """Get the transition number (1-indexed).
 
         Returns:
-            int: The block number (1-8).
+            int: The transition number (1-4).
         """
         return self.value + 1
 
     def __str__(self):
-        return f"{(self.value // 2) + 1}T"
+        return f"{self.number}T"
 
 
 type BlockType = Season | Transition
@@ -105,10 +88,18 @@ type BlockType = Season | Transition
 
 
 def block_type_from_index(block_index: int) -> BlockType:
+    """Decode a zero-based block-of-year index (0-7) into its Season or Transition.
+
+    Args:
+        block_index: Zero-based index of the block within the year (0-7).
+
+    Returns:
+        BlockType: The Season or Transition occupying that position in the year.
+    """
     if block_index % 2 == 0:
-        return Season(block_index)
+        return Season(block_index // 2)
     else:
-        return Transition(block_index)
+        return Transition(block_index // 2)
 
 
 class Weekday(Enum):
@@ -458,7 +449,7 @@ class Block:
         return self.weeks[-1].end
 
     def __str__(self):
-        return f"{self.year_number:02}-{self.type.number:02}"
+        return f"{self.year_number:02}-{self.type}"
 
     def __eq__(self, other):
         return self.index.block_of_calendar == other.index.block_of_calendar
@@ -472,7 +463,7 @@ class Year:
     """Represents a year in the Solcadre calendar.
 
     A year consists of a sequence of blocks (seasons and transitions),
-    starting with GREENTIDE season and ending with the VERNAL_EQUINOX transition.
+    starting with Season.ONE and ending with Transition.FOUR.
 
     Attributes:
         blocks: List of Block objects (seasons and transitions) that make up this year.
@@ -536,12 +527,3 @@ class Time:
 
     def __str__(self):
         return f"{self.day} {self.time_of_day}"
-
-
-class Hemisphere(Enum):
-    """Enumeration of the two hemispheres.
-
-    Used to determine how seasons are mapped based on geographic location.
-    """
-    NORTHERN = auto()
-    SOUTHERN = auto()

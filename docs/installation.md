@@ -43,5 +43,5 @@ calendar = Calendar(
 # Find the day for a specific datetime
 now = datetime.now().astimezone()
 day = calendar.find_day(now)
-print(day)  # e.g., "1/1/1/1" (Year/Block/Week/Weekday)
+print(day)  # e.g., "02-4S-05/6" (Year-Block-Week/Weekday)
 ```
